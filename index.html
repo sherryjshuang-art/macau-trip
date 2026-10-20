@@ -907,6 +907,13 @@ $("#fl").addEventListener("click",async e=>{
     const t=$("#toast"); t.textContent=ok?`已複製 PNR ${c.dataset.copy}`:`PNR：${c.dataset.copy}`; t.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),1600); }
 });
 
+// pages that are built but switched off for now: the tab greys out and shows「準備中」(delete a name to turn it back on)
+const PAUSED=new Set(["explore","info"]);
+PAUSED.forEach(k=>{ const b=document.querySelector(`.tabbar .tb[data-open="${k}"]`); if(b) b.setAttribute("aria-disabled","true"); });
+// registered before the page modules' capture listeners, so a paused tab never reaches them
+$(".tabbar").addEventListener("click",e=>{
+  const b=e.target.closest(".tb"); if(b&&PAUSED.has(b.dataset.open)){ e.stopImmediatePropagation(); soon(b.textContent.trim()); }
+},true);
 $(".tabbar").addEventListener("click",e=>{
   const b=e.target.closest(".tb"); if(!b) return;
   if(b.dataset.open==="flight"){ flOpen(); return; }
@@ -1144,11 +1151,11 @@ function mnRender(){
   $("#mn-list").innerHTML=
     row("fx","匯率換算",{tag:"工具"})+`<div class="mn-sep" role="separator"></div>`+
     row("flight","航班",{cur:w.page==="flight"})+
-    row("explore","探索",{cur:w.page==="explore"})+
+    row("explore","探索",PAUSED.has("explore")?{off:true,tag:"準備中"}:{cur:w.page==="explore"})+
     row("trip","行程",{cur:w.page==="home",acc:true})+
     `<div class="mn-sub" id="mn-sub-trip"${mnOpenSet.has("trip")?"":" hidden"}>${MN_DAYS.map(([k,en,zh])=>`<button class="mn-l2" data-day="${k}"${w.page==="home"&&w.day===k?' aria-current="page"':""}><span class="en">${en}</span>${zh}</button>`).join("")}</div>`+
     row("expense","花費",{cur:w.page==="expense",off:!hasEx,tag:hasEx?"":"準備中"})+
-    row("info","資訊",{cur:w.page==="info",acc:true})+
+    row("info","資訊",PAUSED.has("info")?{off:true,tag:"準備中"}:{cur:w.page==="info",acc:true})+
     `<div class="mn-sub" id="mn-sub-info"${mnOpenSet.has("info")?"":" hidden"}>${MN_SECS.map(([k,zh])=>`<button class="mn-l2" data-sec="${k}"${w.page==="info"&&w.sec===k?' aria-current="page"':""}>${zh}</button>`).join("")}</div>`;
 }
 function mnOpen(){
@@ -1183,6 +1190,7 @@ $("#mn").addEventListener("click",e=>{
   });
   if(!it) return;
   const go=it.dataset.go;
+  if(PAUSED.has(go)) return mnGo(()=>soon(go==="info"?"資訊":"探索"));
   if(go==="trip"||go==="info"){ const open=!mnOpenSet.has(go); open?mnOpenSet.add(go):mnOpenSet.delete(go);
     it.setAttribute("aria-expanded",open); $("#mn-sub-"+go).hidden=!open; return; }
   if(go==="fx") return mnGo(fxOpen);
