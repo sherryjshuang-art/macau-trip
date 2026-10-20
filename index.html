@@ -1404,9 +1404,8 @@ const cleanCode=s=>String(s||"").trim().toLowerCase();
 let ex={code:ls.get("macau-ex-code"),me:ls.get("macau-ex-me"),rows:[],sync:"load",F:null,col:null,unsub:null,edit:null,form:null,delArm:false,changing:false};
 if(!EX_NAMES.includes(ex.me)) ex.me="";
 
-// a shared link like …/#macau-xxxx fills in the trip code once, then the hash is cleared
-const hm=location.hash.match(/^#(macau-[a-z0-9]{6,})$/i);
-if(hm){ ex.code=cleanCode(hm[1]); ls.set("macau-ex-code",ex.code); try{history.replaceState(null,"",location.pathname+location.search)}catch(e){} }
+// the trip code is handed out in private, never through the link: an old …/#macau-xxxx link is cleared unread
+if(/^#macau-/i.test(location.hash)){ try{history.replaceState(null,"",location.pathname+location.search)}catch(e){} }
 
 function exToast(msg){ const t=q("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),1800); }
 
@@ -1472,7 +1471,7 @@ function exRender(){
     if(b.querySelector(".ex-setup")) return;   // don't wipe what's being typed
     b.innerHTML=`<div class="ex-setup">
       <h3>加入共用帳本</h3><p>三個人輸入同一組旅程代碼，就會看到同一本帳。</p>
-      <label class="ex-f"><span>旅程代碼</span><input class="ex-input" id="ex-code-in" value="${h(ex.code)}" placeholder="macau-xxxxxxxx" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"></label>
+      <label class="ex-f"><span>旅程代碼</span><input class="ex-input" id="ex-code-in" type="password" value="${h(ex.code)}" placeholder="macau-xxxxxxxx" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"></label>
       <div class="ex-f"><span>我是</span><div class="ex-seg" id="ex-me-in">${EX_NAMES.map(n=>`<button type="button" class="ex-opt en" data-v="${n}" aria-pressed="${n===ex.me}">${n}</button>`).join("")}</div></div>
       <p class="ex-err" id="ex-setup-err" role="alert"></p>
       <div class="ex-acts"><button class="ex-save" id="ex-join" type="button">開始記帳</button></div></div>`;
@@ -1500,7 +1499,7 @@ function exRender(){
       }).join("")}</div>`;
     }
   }
-  html+=`<p class="ex-foot">旅程代碼 <span class="en">${h(ex.code)}</span>・我是 <span class="en">${h(ex.me)}</span>・<button type="button" id="ex-reset">更換</button></p>`;
+  html+=`<p class="ex-foot">已加入帳本・我是 <span class="en">${h(ex.me)}</span>・<button type="button" id="ex-reset">更換</button></p>`;
   b.innerHTML=html;
 }
 
